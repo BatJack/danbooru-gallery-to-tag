@@ -136,6 +136,9 @@ async function exitApplication() {
 
 function bindEvents() {
     bindDropdowns();
+    if (window.DG && window.DG.scrollTop) {
+        window.DG.scrollTop.bind(elements.backToTopBtn);
+    }
     attachAutocomplete(elements.searchTags, elements.searchAutocomplete, "search");
     attachAutocomplete(elements.addTagInput, elements.addTagAutocomplete, "replace");
     window.addEventListener("beforeunload", handleBeforeUnload);

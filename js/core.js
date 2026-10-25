@@ -139,6 +139,7 @@ const elements = {
     gelbooruRecency: document.getElementById("gelbooru-recency"),
     searchLimit: document.getElementById("search-limit"),
     searchPage: document.getElementById("search-page"),
+    backToTopBtn: document.getElementById("back-to-top-btn"),
     prevPageBtn: document.getElementById("prev-page-btn"),
     jumpPageBtn: document.getElementById("jump-page-btn"),
     nextPageBtn: document.getElementById("next-page-btn"),
@@ -998,6 +999,9 @@ function goToPage(nextPage) {
     }
     saveUiPrefs();
     updateSearchControlsState();
+    if (window.DG && window.DG.scrollTop) {
+        window.DG.scrollTop.scrollToTop();
+    }
     runSearch();
 }
 
