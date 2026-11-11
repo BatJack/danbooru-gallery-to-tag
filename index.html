@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&amp;family=Nunito:wght@400;500;600;700;800&amp;display=swap">
-    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
     <a class="skip-link" href="#main-content">跳到主要内容</a>
@@ -171,6 +171,11 @@
         </main>
     </div>
 
+    <button id="back-to-top-btn" class="back-to-top" type="button" title="返回顶部" aria-label="返回顶部">
+        <span class="back-to-top-arrow" aria-hidden="true">↑</span>
+        <span>顶部</span>
+    </button>
+
     <dialog id="viewer-dialog" class="modal-card viewer-modal">
         <div class="modal-shell">
             <div class="modal-header">
@@ -197,17 +202,17 @@
                 <div>
                     <p class="modal-kicker">退出</p>
                     <h2>关闭页面还是退出应用</h2>
-                    <p class="modal-subtitle">关闭浏览器页面不会停止本地服务；如果你想真正结束程序，请选择“退出应用”。</p>
+                    <p class="modal-subtitle">当前是纯静态站点，所有功能都在浏览器本地运行，关闭本页不会影响任何后端。</p>
                 </div>
                 <button id="close-exit-dialog-btn" class="modal-close" type="button" aria-label="关闭退出确认">✕</button>
             </div>
             <div class="confirm-body">
-                <p class="confirm-copy">如果你直接点浏览器的关闭按钮，浏览器只能显示原生离开提示，不能弹出这里这种自定义选项。</p>
+                <p class="confirm-copy">由于没有本地服务，“退出应用”与“只关闭页面”效果相同，都只是关闭当前标签页。</p>
             </div>
             <div class="modal-footer">
                 <button id="cancel-exit-btn" class="toolbar-button" type="button">继续使用</button>
                 <button id="close-page-btn" class="toolbar-button" type="button">只关闭页面</button>
-                <button id="confirm-exit-app-btn" class="toolbar-button danger-button" type="button">退出应用</button>
+                <button id="confirm-exit-app-btn" class="toolbar-button danger-button" type="button">关闭页面</button>
             </div>
         </div>
     </dialog>
@@ -340,6 +345,21 @@
                     </select>
                 </label>
                 <label class="form-field form-field-wide">
+                    <span>CORS 代理（可选，API 直连失败时回退）</span>
+                    <input id="settings-cors-proxy" type="text" placeholder="如 https://corsproxy.io/?url={url} 或 https://api.allorigins.win/raw?url=">
+                </label>
+                <label class="form-field form-field-wide">
+                    <span>图片代理（可选，用于 Gelbooru 防盗链）</span>
+                    <input id="settings-image-proxy" type="text" placeholder="如 https://wsrv.nl/?url={url}">
+                </label>
+                <div class="form-field form-field-wide">
+                    <span>代理连通性</span>
+                    <div class="proxy-test-row">
+                        <button id="test-proxy-btn" class="toolbar-button" type="button">测试代理</button>
+                        <span id="settings-proxy-test-status" class="proxy-test-status">未测试</span>
+                    </div>
+                </div>
+                <label class="form-field form-field-wide">
                     <span>过滤标签</span>
                     <textarea id="settings-filter-tags" rows="4" placeholder="每行一个，或使用逗号分隔"></textarea>
                 </label>
@@ -444,13 +464,18 @@
         </form>
     </dialog>
 
-    <input id="import-file-input" type="file" accept=".zip" class="hidden">
+    <input id="import-file-input" type="file" accept=".json,application/json" class="hidden">
     <div id="toast-region" class="toast-region" aria-live="polite"></div>
 
-    <script src="/static/js/core.js" defer></script>
-    <script src="/static/js/search.js" defer></script>
-    <script src="/static/js/editor.js" defer></script>
-    <script src="/static/js/library.js" defer></script>
-    <script src="/static/js/bootstrap.js" defer></script>
+    <script src="./js/translations.js" defer></script>
+    <script src="./js/prompt-clean.js" defer></script>
+    <script src="./js/gallery-api.js" defer></script>
+    <script src="./js/store.js" defer></script>
+    <script src="./js/core.js" defer></script>
+    <script src="./js/scroll-top.js" defer></script>
+    <script src="./js/search.js" defer></script>
+    <script src="./js/editor.js" defer></script>
+    <script src="./js/library.js" defer></script>
+    <script src="./js/bootstrap.js" defer></script>
 </body>
 </html>

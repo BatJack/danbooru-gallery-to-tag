@@ -210,7 +210,18 @@ async function savePromptEntry(event) {
 }
 
 function exportLibrary() {
-    window.open("/api/library/export", "_blank", "noopener,noreferrer");
+    // Static site: download the library JSON straight from the browser.
+    const data = state.library || {};
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "prompt_library.json";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    notify("词库已导出。", "success");
 }
 
 async function importLibrary() {
@@ -218,14 +229,15 @@ async function importLibrary() {
     if (!file) {
         return;
     }
-    const formData = new FormData();
-    formData.append("file", file);
-    await api("/api/library/import", {
-        method: "POST",
-        body: formData,
-    });
-    elements.importFileInput.value = "";
-    await loadLibrary();
-    notify("词库导入完成。", "success");
+    try {
+        const data = JSON.parse(await file.text());
+        await DG.library.save(data);
+        await loadLibrary();
+        notify("词库导入完成。", "success");
+    } catch (error) {
+        notify(`词库导入失败: ${error.message}`, "error");
+    } finally {
+        elements.importFileInput.value = "";
+    }
 }
 

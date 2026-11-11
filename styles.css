@@ -1145,6 +1145,27 @@ a {
     margin-top: 8px;
 }
 
+.proxy-test-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+}
+
+.proxy-test-status {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--muted-strong);
+}
+
+.proxy-test-status.is-ok {
+    color: var(--accent);
+}
+
+.proxy-test-status.is-error {
+    color: var(--danger);
+}
+
 .library-modal {
     width: min(1320px, calc(100vw - 24px));
 }
@@ -3355,6 +3376,82 @@ p {
     .pager-footer .pager-controls {
         width: 100%;
         justify-content: center;
+    }
+}
+
+/* Back to top: floating sticker button, hidden until the page is scrolled. */
+.back-to-top {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 80;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 44px;
+    padding: 0 16px;
+    border: 1.5px solid var(--text);
+    border-radius: 999px;
+    background: #fffdf7;
+    color: var(--text);
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 3px 0 var(--text), 0 12px 28px rgba(27, 23, 18, 0.16);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: opacity 0.18s ease, transform 0.18s ease, background-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.back-to-top.is-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.back-to-top.is-visible:hover {
+    background: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 0 var(--text), 0 16px 30px rgba(27, 23, 18, 0.18);
+}
+
+.back-to-top.is-visible:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 0 var(--text);
+}
+
+.back-to-top:focus-visible {
+    outline: 3px solid rgba(var(--accent-rgb), 0.55);
+    outline-offset: 3px;
+}
+
+.back-to-top-arrow {
+    font-size: 18px;
+    line-height: 1;
+}
+
+/* Keep transient toasts clear of the floating button. */
+.toast-region {
+    bottom: 82px;
+}
+
+@media (max-width: 580px) {
+    .back-to-top {
+        right: 12px;
+        bottom: 12px;
+        min-height: 42px;
+        padding: 0 13px;
+        font-size: 13px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    .back-to-top {
+        transition: none;
     }
 }
 

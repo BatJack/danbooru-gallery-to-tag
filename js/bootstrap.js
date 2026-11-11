@@ -121,33 +121,24 @@ function closePageOnly() {
 }
 
 async function exitApplication() {
-    if (state.appExit.shutdownInFlight) {
-        return;
-    }
-
-    state.appExit.shutdownInFlight = true;
-    elements.confirmExitAppBtn.disabled = true;
-    elements.confirmExitAppBtn.textContent = "正在退出...";
-
-    try {
-        await api("/api/app/shutdown", { method: "POST" });
-        enablePageCloseWithoutPrompt();
-        closeExitDialog();
-        elements.searchStatus.textContent = "应用正在退出...";
-        notify("应用正在退出，本页可以直接关闭。", "success");
-        window.setTimeout(() => {
-            window.close();
-        }, 400);
-    } catch (error) {
-        state.appExit.shutdownInFlight = false;
-        elements.confirmExitAppBtn.disabled = false;
-        elements.confirmExitAppBtn.textContent = "退出应用";
-        notify(`退出应用失败: ${error.message}`, "error");
-    }
+    // Static site: there is no local server to stop, just try to close the tab.
+    enablePageCloseWithoutPrompt();
+    closeExitDialog();
+    elements.searchStatus.textContent = "正在关闭页面...";
+    notify("静态站点没有后端进程，直接关闭本页即可。", "success");
+    window.close();
+    window.setTimeout(() => {
+        if (!window.closed) {
+            notify("浏览器没有允许脚本直接关页，请手动关闭当前标签页。");
+        }
+    }, 250);
 }
 
 function bindEvents() {
     bindDropdowns();
+    if (window.DG && window.DG.scrollTop) {
+        window.DG.scrollTop.bind(elements.backToTopBtn);
+    }
     attachAutocomplete(elements.searchTags, elements.searchAutocomplete, "search");
     attachAutocomplete(elements.addTagInput, elements.addTagAutocomplete, "replace");
     window.addEventListener("beforeunload", handleBeforeUnload);
@@ -221,6 +212,7 @@ function bindEvents() {
     elements.closeSettingsBtn.addEventListener("click", () => elements.settingsDialog.close());
     elements.cancelSettingsBtn.addEventListener("click", () => elements.settingsDialog.close());
     elements.settingsForm.addEventListener("submit", saveSettings);
+    elements.settingsProxyTestBtn.addEventListener("click", testProxySettings);
     elements.toolbarCategoryCheckboxes.forEach((checkbox) => {
         checkbox.addEventListener("change", persistSelectedCategories);
     });

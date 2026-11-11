@@ -40,6 +40,34 @@ async function syncRemoteFavorites({ silent = false } = {}) {
     }
 }
 
+async function testProxySettings() {
+    const status = elements.settingsProxyTestStatus;
+    if (!status) {
+        return;
+    }
+    const messages = [];
+    let failed = false;
+    status.classList.remove("is-ok", "is-error");
+    status.textContent = "测试中...";
+
+    const corsResult = await DG.gallery.testProxy(
+        elements.settingsCorsProxy ? elements.settingsCorsProxy.value : "",
+        currentSource(),
+    );
+    messages.push(`CORS 代理：${corsResult.message}`);
+    failed = failed || !corsResult.ok;
+
+    const imageProxy = elements.settingsImageProxy ? elements.settingsImageProxy.value.trim() : "";
+    if (imageProxy) {
+        const imageResult = await DG.gallery.testImageProxy(imageProxy);
+        messages.push(`图片代理：${imageResult.message}`);
+        failed = failed || !imageResult.ok;
+    }
+
+    status.textContent = messages.join(" ｜ ");
+    status.classList.add(failed ? "is-error" : "is-ok");
+}
+
 async function saveSettings(event) {
     event.preventDefault();
     const payload = {
@@ -56,6 +84,8 @@ async function saveSettings(event) {
         filter_enabled: elements.settingsFilterEnabled.checked,
         high_quality_previews: elements.settingsHighQualityPreviews.checked,
         autocomplete_max_results: Math.max(5, Number(elements.settingsAutocompleteMaxResults.value) || 20),
+        cors_proxy: DG.gallery.normalizeProxy(elements.settingsCorsProxy ? elements.settingsCorsProxy.value : ""),
+        image_proxy: DG.gallery.normalizeProxy(elements.settingsImageProxy ? elements.settingsImageProxy.value : ""),
         selected_categories: Array.from(elements.settingsSelectedCategories)
             .filter((checkbox) => checkbox.checked)
             .map((checkbox) => checkbox.value),

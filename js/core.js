@@ -96,7 +96,8 @@ const state = {
         truncated: false,
     },
     appExit: {
-        ignoreBeforeUnloadPrompt: false,
+        // Static site: leaving the page needs no "stop the local server" prompt.
+        ignoreBeforeUnloadPrompt: true,
         shutdownInFlight: false,
     },
     onlineSearchCache: createEmptyOnlineSearchCache(),
@@ -138,6 +139,7 @@ const elements = {
     gelbooruRecency: document.getElementById("gelbooru-recency"),
     searchLimit: document.getElementById("search-limit"),
     searchPage: document.getElementById("search-page"),
+    backToTopBtn: document.getElementById("back-to-top-btn"),
     prevPageBtn: document.getElementById("prev-page-btn"),
     jumpPageBtn: document.getElementById("jump-page-btn"),
     nextPageBtn: document.getElementById("next-page-btn"),
@@ -183,6 +185,10 @@ const elements = {
     settingsFilterEnabled: document.getElementById("settings-filter-enabled"),
     settingsHighQualityPreviews: document.getElementById("settings-high-quality-previews"),
     settingsAutocompleteMaxResults: document.getElementById("settings-autocomplete-max-results"),
+    settingsCorsProxy: document.getElementById("settings-cors-proxy"),
+    settingsImageProxy: document.getElementById("settings-image-proxy"),
+    settingsProxyTestBtn: document.getElementById("test-proxy-btn"),
+    settingsProxyTestStatus: document.getElementById("settings-proxy-test-status"),
     settingsSelectedCategories: document.querySelectorAll('input[name="settings-selected-categories"]'),
     libraryDialog: document.getElementById("library-dialog"),
     closeLibraryBtn: document.getElementById("close-library-btn"),
@@ -221,6 +227,12 @@ const elements = {
 };
 
 async function api(path, options = {}) {
+    // GitHub Pages has no backend: /api/* requests are answered by the
+    // browser-side router in store.js / gallery-api.js.
+    if (window.DG && DG.api && DG.api.canHandle(path)) {
+        return DG.api.handle(path, options);
+    }
+
     const response = await fetch(path, options);
     if (!response.ok) {
         const contentType = response.headers.get("content-type") || "";
@@ -805,7 +817,12 @@ function truncateText(value, maxLength = 180) {
 }
 
 function proxyImageUrl(url) {
-    return url ? `/api/danbooru/image?url=${encodeURIComponent(url)}` : null;
+    if (!url) {
+        return null;
+    }
+    // Load upstream CDN images directly; optionally route them through a
+    // user-configured image proxy (settings.image_proxy) for hotlink-prone hosts.
+    return window.DG && DG.gallery ? DG.gallery.imageUrl(url) : url;
 }
 
 function buildImageCandidates(post, options = {}) {
@@ -904,6 +921,12 @@ function syncSettingsForm() {
     elements.settingsFilterEnabled.checked = Boolean(state.settings?.filter_enabled);
     elements.settingsHighQualityPreviews.checked = Boolean(state.settings?.high_quality_previews);
     elements.settingsAutocompleteMaxResults.value = state.settings?.autocomplete_max_results || 20;
+    if (elements.settingsCorsProxy) {
+        elements.settingsCorsProxy.value = state.settings?.cors_proxy || "";
+    }
+    if (elements.settingsImageProxy) {
+        elements.settingsImageProxy.value = state.settings?.image_proxy || "";
+    }
     const selected = new Set(state.settings?.selected_categories || []);
     elements.settingsSelectedCategories.forEach((checkbox) => {
         checkbox.checked = selected.has(checkbox.value);
@@ -978,6 +1001,9 @@ function goToPage(nextPage) {
     }
     saveUiPrefs();
     updateSearchControlsState();
+    if (window.DG && window.DG.scrollTop) {
+        window.DG.scrollTop.scrollToTop();
+    }
     runSearch();
 }
 
