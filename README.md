@@ -104,6 +104,23 @@ Keep the window open while browsing. The helper is for local use only — GitHub
 
 Note: do not put `127.0.0.1:7897` into the CORS proxy field. That is an HTTP `CONNECT` proxy, not a URL-forwarding proxy. Once a CORS proxy is configured, the frontend sends every upstream request through it directly instead of trying a direct connection first.
 
+### Gelbooru tag userscript
+
+`tools/gelbooru-tags.user.js` is a Tampermonkey / Violentmonkey userscript. On any Gelbooru post page (`page=post&s=view`) it adds a floating panel that groups the post's tags into 画师 / 版权 / 角色 / 普通 / 元数据 (artist / copyright / character / general / metadata), using the same category order and chip colors as the gallery.
+
+**One-click install:** [Install gelbooru-tags.user.js](https://raw.githubusercontent.com/BatJack/danbooru-gallery-to-tag/github-pages/tools/gelbooru-tags.user.js)
+
+Manual install: Tampermonkey dashboard → **添加新脚本** → paste the file contents → `Ctrl+S`.
+
+Features:
+
+- one checkbox per category; **复制勾选** copies only the checked categories
+- copied tags are joined with `, ` (English comma + space)
+- click a single chip to copy just that tag; each group also has its own copy button
+- collapse state is remembered in `localStorage`
+
+The install link points at the `github-pages` branch, so it only works after the file has been pushed there.
+
 ### Limitations compared to the old local build
 
 - No server-side image upload / preview cache; the prompt library keeps text only.
@@ -229,6 +246,23 @@ python cors_proxy.py
 使用期间保持窗口开启即可。该工具仅用于本地调试，部署到 GitHub Pages 时不需要它。
 
 注意：不要把 `127.0.0.1:7897` 填进 CORS 代理输入框。那是 HTTP `CONNECT` 代理，不提供 URL 转发。另外，一旦配置了 CORS 代理，前端会直接走代理，不再先尝试直连。
+
+### Gelbooru 标签油猴脚本
+
+`tools/gelbooru-tags.user.js` 是一个 Tampermonkey / Violentmonkey 脚本。打开任意 Gelbooru 帖子页（`page=post&s=view`）后，会在右上角注入一个浮动面板，把该帖的标签按 画师 / 版权 / 角色 / 普通 / 元数据（artist / copyright / character / general / metadata）分组展示，分类顺序与 chip 配色和本项目一致。
+
+**一键安装：** [安装 gelbooru-tags.user.js](https://raw.githubusercontent.com/BatJack/danbooru-gallery-to-tag/github-pages/tools/gelbooru-tags.user.js)
+
+手动安装：Tampermonkey 面板 → **添加新脚本** → 粘贴文件内容 → `Ctrl+S`。
+
+功能：
+
+- 每个分类前有复选框，**复制勾选** 只复制被勾选分类里的标签
+- 复制结果用英文逗号加空格 `, ` 连接
+- 单击单个 chip 只复制该标签；每个分组也有独立的复制按钮
+- 面板折叠状态保存在 `localStorage`
+
+安装链接指向 `github-pages` 分支，需要先把该文件推送到该分支才会生效。
 
 ### 与原本地版的差异
 
