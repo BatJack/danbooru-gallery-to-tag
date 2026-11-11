@@ -212,6 +212,7 @@ function bindEvents() {
     elements.closeSettingsBtn.addEventListener("click", () => elements.settingsDialog.close());
     elements.cancelSettingsBtn.addEventListener("click", () => elements.settingsDialog.close());
     elements.settingsForm.addEventListener("submit", saveSettings);
+    elements.settingsProxyTestBtn.addEventListener("click", testProxySettings);
     elements.toolbarCategoryCheckboxes.forEach((checkbox) => {
         checkbox.addEventListener("change", persistSelectedCategories);
     });

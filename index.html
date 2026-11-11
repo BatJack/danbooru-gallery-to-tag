@@ -352,6 +352,13 @@
                     <span>图片代理（可选，用于 Gelbooru 防盗链）</span>
                     <input id="settings-image-proxy" type="text" placeholder="如 https://wsrv.nl/?url={url}">
                 </label>
+                <div class="form-field form-field-wide">
+                    <span>代理连通性</span>
+                    <div class="proxy-test-row">
+                        <button id="test-proxy-btn" class="toolbar-button" type="button">测试代理</button>
+                        <span id="settings-proxy-test-status" class="proxy-test-status">未测试</span>
+                    </div>
+                </div>
                 <label class="form-field form-field-wide">
                     <span>过滤标签</span>
                     <textarea id="settings-filter-tags" rows="4" placeholder="每行一个，或使用逗号分隔"></textarea>

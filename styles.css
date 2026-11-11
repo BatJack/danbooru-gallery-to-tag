@@ -1145,6 +1145,27 @@ a {
     margin-top: 8px;
 }
 
+.proxy-test-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+}
+
+.proxy-test-status {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--muted-strong);
+}
+
+.proxy-test-status.is-ok {
+    color: var(--accent);
+}
+
+.proxy-test-status.is-error {
+    color: var(--danger);
+}
+
 .library-modal {
     width: min(1320px, calc(100vw - 24px));
 }

@@ -187,6 +187,8 @@ const elements = {
     settingsAutocompleteMaxResults: document.getElementById("settings-autocomplete-max-results"),
     settingsCorsProxy: document.getElementById("settings-cors-proxy"),
     settingsImageProxy: document.getElementById("settings-image-proxy"),
+    settingsProxyTestBtn: document.getElementById("test-proxy-btn"),
+    settingsProxyTestStatus: document.getElementById("settings-proxy-test-status"),
     settingsSelectedCategories: document.querySelectorAll('input[name="settings-selected-categories"]'),
     libraryDialog: document.getElementById("library-dialog"),
     closeLibraryBtn: document.getElementById("close-library-btn"),

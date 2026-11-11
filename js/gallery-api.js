@@ -26,15 +26,36 @@
         return DG.settings ? DG.settings.load() : {};
     }
 
-    function proxiedUrl(url, proxy) {
-        const prefix = String(proxy || "").trim();
-        if (!prefix) {
+    // Accepts both "https://host/?url={url}" templates and bare prefixes such as
+    // "https://host/?url=" or "https://host" pasted from proxy docs.
+    function normalizeProxyTemplate(value) {
+        const trimmed = String(value || "").trim();
+        if (!trimmed) {
             return "";
         }
-        if (prefix.includes("{url}")) {
-            return prefix.replaceAll("{url}", encodeURIComponent(url));
+        if (trimmed.includes("{url}")) {
+            return trimmed;
         }
-        return `${prefix.replace(/\/+$/, "")}/${encodeURIComponent(url)}`;
+        if (/[=?&]$/.test(trimmed)) {
+            return `${trimmed}{url}`;
+        }
+        return `${trimmed.replace(/\/+$/, "")}/{url}`;
+    }
+
+    function proxiedUrl(url, proxy) {
+        const template = normalizeProxyTemplate(proxy);
+        if (!template) {
+            return "";
+        }
+        return template.replaceAll("{url}", encodeURIComponent(url));
+    }
+
+    function hostOf(url) {
+        try {
+            return new URL(url, window.location.href).host;
+        } catch (_error) {
+            return String(url);
+        }
     }
 
     async function rawFetch(url, options = {}) {
@@ -57,12 +78,20 @@
         try {
             return await rawFetch(url, options);
         } catch (error) {
-            const proxy = currentSettings().cors_proxy;
-            const fallback = proxiedUrl(url, proxy);
-            if (!fallback) {
-                throw error;
+            if (error && error.name === "AbortError") {
+                const seconds = Math.round((options.timeoutMs || 25000) / 1000);
+                throw new Error(`请求超时：${hostOf(url)} 未在 ${seconds} 秒内响应`);
             }
-            return rawFetch(fallback, options);
+            const template = normalizeProxyTemplate(currentSettings().cors_proxy);
+            if (!template) {
+                throw new Error(`无法连接 ${hostOf(url)}：网络不可达，或被浏览器跨域(CORS)拦截。可在设置中填写 CORS 代理。`);
+            }
+            try {
+                return await rawFetch(proxiedUrl(url, template), options);
+            } catch (proxyError) {
+                const reason = proxyError && proxyError.name === "AbortError" ? "代理响应超时" : "代理不可达";
+                throw new Error(`CORS 代理失败（${reason}）：${template}。请检查代理地址是否可用。`);
+            }
         }
     }
 
@@ -746,7 +775,63 @@
         throw new Error(await extractError(response));
     }
 
+    // ---------- Proxy diagnostics ----------
+
+    const PROXY_TEST_TARGETS = {
+        danbooru: `${DANBOORU_BASE}/posts.json?limit=1`,
+        gelbooru: `${GELBOORU_BASE}/`,
+    };
+
+    async function testProxy(proxy, source) {
+        const template = normalizeProxyTemplate(proxy);
+        if (!template) {
+            return { ok: false, message: "未填写 CORS 代理地址" };
+        }
+        const target = PROXY_TEST_TARGETS[source === "gelbooru" ? "gelbooru" : "danbooru"];
+        try {
+            const response = await rawFetch(proxiedUrl(target, template), { timeoutMs: 15000 });
+            if (response.status >= 400 && ![401, 403].includes(response.status)) {
+                return { ok: false, message: `代理可达，但目标返回 HTTP ${response.status}` };
+            }
+            return { ok: true, message: `代理可用（HTTP ${response.status}）` };
+        } catch (error) {
+            if (error && error.name === "AbortError") {
+                return { ok: false, message: "代理超时（15 秒）" };
+            }
+            return { ok: false, message: "代理不可用：地址无效、未部署，或未返回 CORS 头" };
+        }
+    }
+
+    function testImageProxy(proxy) {
+        const template = normalizeProxyTemplate(proxy);
+        if (!template) {
+            return Promise.resolve({ ok: false, message: "未填写图片代理地址" });
+        }
+        return new Promise((resolve) => {
+            const image = new Image();
+            let settled = false;
+            let timer = 0;
+            const finish = (result) => {
+                if (settled) {
+                    return;
+                }
+                settled = true;
+                window.clearTimeout(timer);
+                image.onload = null;
+                image.onerror = null;
+                resolve(result);
+            };
+            timer = window.setTimeout(() => finish({ ok: false, message: "图片代理超时（15 秒）" }), 15000);
+            image.onload = () => finish({ ok: true, message: "图片代理可用" });
+            image.onerror = () => finish({ ok: false, message: "图片代理不可用：地址无效，或被目标站点拒绝" });
+            image.src = proxiedUrl(`${GELBOORU_BASE}/favicon.ico`, template);
+        });
+    }
+
     DG.gallery = {
+        normalizeProxy: normalizeProxyTemplate,
+        testProxy,
+        testImageProxy,
         searchPosts: async ({ tags, limit = 20, page = 1, rating = "all", before_id = "", source = "danbooru" }) => {
             const normalizedSource = source === "gelbooru" ? "gelbooru" : "danbooru";
             if (normalizedSource === "gelbooru") {
