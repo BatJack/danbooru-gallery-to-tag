@@ -72,6 +72,37 @@ Opening `index.html` directly also works in most browsers, though a local server
   - `https://api.allorigins.win/raw?url=`
 - Images are loaded straight from the upstream CDN. If a host blocks hotlinking, set an **image proxy** in settings, for example `https://wsrv.nl/?url={url}`.
 - API credentials are stored in the browser's `localStorage` only and are never sent anywhere except the upstream site you configured.
+- Public proxies (corsproxy.io, allorigins, ...) are frequently rate-limited or offline. For local use prefer the bundled [`cors_proxy.py`](#using-the-bundled-cors-proxy-cors_proxypy) described below.
+
+### Using the bundled CORS proxy (`cors_proxy.py`)
+
+When the browser cannot reach the upstream sites (DNS pollution, blocked network) or Gelbooru is stopped by CORS, run the bundled helper from the repository root:
+
+```bash
+python cors_proxy.py
+```
+
+The window has four inputs:
+
+| Input | Default | Description |
+| --- | --- | --- |
+| Use local proxy | on, port `7897` | Chains a local HTTP proxy (Clash / V2Ray, etc.) so requests bypass DNS pollution |
+| Forward port | `8787` | Port this CORS proxy listens on |
+| Site port | `8000` | Also serves the repository root as a static site |
+| Open browser on start | on | Opens `http://127.0.0.1:<site port>/` after starting |
+
+Click **启动**, copy the address shown in the status bar (`http://127.0.0.1:8787/?url={url}`), and paste it into both **CORS proxy** and **image proxy** in the app settings. Use **测试代理** to verify both.
+
+What it does:
+
+- Forwards `GET` only, and only to an allow-list of hosts (`danbooru.donmai.us`, `*.donmai.us`, `gelbooru.com`, `*.gelbooru.com`, `*.gelbooru.org`), so it never becomes an open proxy.
+- Adds `Access-Control-Allow-Origin: *` plus `Access-Control-Allow-Private-Network: true`, so it also works from the `https` GitHub Pages build.
+- Sends `Referer: https://gelbooru.com/` when forwarding Gelbooru images. Without it the CDN redirects thumbnails to `hotlink.php` and the gallery shows no images at all.
+- Probes ports before binding: on Windows `SO_REUSEADDR` lets a second process bind the same port and silently steal requests, so the helper refuses to start when the forward port is already taken.
+
+Keep the window open while browsing. The helper is for local use only — GitHub Pages does not need it.
+
+Note: do not put `127.0.0.1:7897` into the CORS proxy field. That is an HTTP `CONNECT` proxy, not a URL-forwarding proxy. Once a CORS proxy is configured, the frontend sends every upstream request through it directly instead of trying a direct connection first.
 
 ### Limitations compared to the old local build
 
@@ -90,6 +121,8 @@ Opening `index.html` directly also works in most browsers, though a local server
   Bundled Chinese tag translations and the default prompt library.
 - `docs/images/`
   README screenshots.
+- `cors_proxy.py`, `tools/`
+  Local-only helpers: a GUI CORS/image proxy + static server, and the Gelbooru tag userscript. Not part of the deployed site.
 
 ### Notes
 
@@ -165,6 +198,37 @@ python -m http.server 8000
   - `https://api.allorigins.win/raw?url=`
 - 图片直接来自上游 CDN。若图源限制防盗链，可在设置中填写 **图片代理**，例如 `https://wsrv.nl/?url={url}`。
 - API 凭据只保存在浏览器 `localStorage`，除你配置的上游站点外不会发送到任何地方。
+- 公共代理（corsproxy.io、allorigins 等）经常限流或不可用，本地使用建议改用下文的 [`cors_proxy.py`](#使用内置-cors-代理cors_proxypy)。
+
+### 使用内置 CORS 代理（`cors_proxy.py`）
+
+当浏览器无法直达上游站点（DNS 污染、网络被阻断），或 Gelbooru 被 CORS 拦截时，在仓库根目录运行内置的小工具：
+
+```bash
+python cors_proxy.py
+```
+
+窗口中有四项：
+
+| 输入 | 默认值 | 说明 |
+| --- | --- | --- |
+| 使用本地代理 | 勾选，端口 `7897` | 串联本机 HTTP 代理（Clash / V2Ray 等），用于绕过 DNS 污染 |
+| 转发端口 | `8787` | CORS 代理监听的端口 |
+| 站点端口 | `8000` | 同时把仓库根目录作为静态站点托管 |
+| 启动后打开浏览器 | 勾选 | 启动后自动打开 `http://127.0.0.1:<站点端口>/` |
+
+点击 **启动**，状态栏会显示 `http://127.0.0.1:8787/?url={url}`；点 **复制代理地址**，分别填到应用设置里的 **CORS 代理** 和 **图片代理**，再点 **测试代理** 验证。
+
+它的行为：
+
+- 只转发 `GET`，且目标域名必须在白名单内（`danbooru.donmai.us`、`*.donmai.us`、`gelbooru.com`、`*.gelbooru.com`、`*.gelbooru.org`），不会变成开放代理。
+- 响应会补上 `Access-Control-Allow-Origin: *` 与 `Access-Control-Allow-Private-Network: true`，因此从 GitHub Pages 的 `https` 页面也能访问。
+- 转发 Gelbooru 图片时会带 `Referer: https://gelbooru.com/`。不带的话 CDN 会把缩略图 302 到 `hotlink.php`，画廊里一张图都显示不出来。
+- 启动前会探测端口：Windows 的 `SO_REUSEADDR` 允许两个进程绑定同一端口，请求可能被旧进程吃掉，所以转发端口被占用时会直接拒绝启动。
+
+使用期间保持窗口开启即可。该工具仅用于本地调试，部署到 GitHub Pages 时不需要它。
+
+注意：不要把 `127.0.0.1:7897` 填进 CORS 代理输入框。那是 HTTP `CONNECT` 代理，不提供 URL 转发。另外，一旦配置了 CORS 代理，前端会直接走代理，不再先尝试直连。
 
 ### 与原本地版的差异
 
@@ -183,6 +247,8 @@ python -m http.server 8000
   内置的中文标签翻译与默认词库
 - `docs/images/`
   README 展示截图
+- `cors_proxy.py`、`tools/`
+  仅本地使用的辅助工具：带界面的 CORS / 图片代理和静态服务器，以及 Gelbooru 标签油猴脚本；不属于部署产物
 
 ### 说明
 

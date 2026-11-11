@@ -75,6 +75,17 @@
     }
 
     async function request(url, options = {}) {
+        const template = normalizeProxyTemplate(currentSettings().cors_proxy);
+        // 配置了 CORS 代理就直接走代理：直连在被墙 / DNS 污染的环境里会挂到超时，
+        // 每个请求白等 20 秒以上，表现就是列表一直空着；超时也不会再回退代理。
+        if (template) {
+            try {
+                return await rawFetch(proxiedUrl(url, template), options);
+            } catch (proxyError) {
+                const reason = proxyError && proxyError.name === "AbortError" ? "代理响应超时" : "代理不可达";
+                throw new Error(`CORS 代理失败（${reason}）：${template}。请检查代理地址是否可用。`);
+            }
+        }
         try {
             return await rawFetch(url, options);
         } catch (error) {
@@ -82,16 +93,7 @@
                 const seconds = Math.round((options.timeoutMs || 25000) / 1000);
                 throw new Error(`请求超时：${hostOf(url)} 未在 ${seconds} 秒内响应`);
             }
-            const template = normalizeProxyTemplate(currentSettings().cors_proxy);
-            if (!template) {
-                throw new Error(`无法连接 ${hostOf(url)}：网络不可达，或被浏览器跨域(CORS)拦截。可在设置中填写 CORS 代理。`);
-            }
-            try {
-                return await rawFetch(proxiedUrl(url, template), options);
-            } catch (proxyError) {
-                const reason = proxyError && proxyError.name === "AbortError" ? "代理响应超时" : "代理不可达";
-                throw new Error(`CORS 代理失败（${reason}）：${template}。请检查代理地址是否可用。`);
-            }
+            throw new Error(`无法连接 ${hostOf(url)}：网络不可达，或被浏览器跨域(CORS)拦截。可在设置中填写 CORS 代理。`);
         }
     }
 
